@@ -1,65 +1,132 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import {
+  PanelLeftClose,
+  PanelLeft,
+  Eye,
+  Pencil,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useActiveFile, useStore } from "@/lib/store";
+import { FileTree } from "@/components/file-tree";
+import { Editor } from "@/components/editor";
+import { Preview } from "@/components/preview";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function Home() {
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mode, setMode] = useState<"write" | "preview">("write");
+  const file = useActiveFile();
+  const { files } = useStore();
+
+  const breadcrumb = (() => {
+    if (!file) return null;
+    const parts: string[] = [file.name];
+    let current = file;
+    while (current.parentId) {
+      const parent = files.find((f) => f.id === current.parentId);
+      if (!parent) break;
+      parts.unshift(parent.name);
+      current = parent;
+    }
+    return parts;
+  })();
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <TooltipProvider delay={300}>
+      <div className="h-screen flex flex-col bg-background">
+        {/* Top bar */}
+        <header className="h-11 border-b flex items-center px-2 gap-2 shrink-0">
+          <Tooltip>
+            <TooltipTrigger
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+              {sidebarOpen ? (
+                <PanelLeftClose className="h-4 w-4" />
+              ) : (
+                <PanelLeft className="h-4 w-4" />
+              )}
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {sidebarOpen ? "Hide sidebar" : "Show sidebar"}
+            </TooltipContent>
+          </Tooltip>
+
+          {breadcrumb && (
+            <div className="flex items-center gap-1 text-sm text-muted-foreground ml-1">
+              {breadcrumb.map((part, i) => (
+                <span key={i} className="flex items-center gap-1">
+                  {i > 0 && <span className="text-muted-foreground/50">/</span>}
+                  <span
+                    className={cn(
+                      i === breadcrumb.length - 1 && "text-foreground"
+                    )}
+                  >
+                    {part}
+                  </span>
+                </span>
+              ))}
+            </div>
+          )}
+
+          <div className="ml-auto flex items-center gap-1">
+            <div className="flex items-center rounded-md border p-0.5">
+              <Tooltip>
+                <TooltipTrigger
+                  onClick={() => setMode("write")}
+                  className={cn(
+                    "p-1 rounded-sm transition-colors",
+                    mode === "write"
+                      ? "bg-accent text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Write</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger
+                  onClick={() => setMode("preview")}
+                  className={cn(
+                    "p-1 rounded-sm transition-colors",
+                    mode === "preview"
+                      ? "bg-accent text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Preview</TooltipContent>
+              </Tooltip>
+            </div>
+          </div>
+        </header>
+
+        <div className="flex-1 flex overflow-hidden">
+          {/* Sidebar */}
+          <aside
+            className={cn(
+              "border-r bg-muted/30 transition-all duration-200 overflow-hidden shrink-0",
+              sidebarOpen ? "w-60" : "w-0"
+            )}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <FileTree />
+          </aside>
+
+          {/* Main content */}
+          <main className="flex-1 flex flex-col overflow-hidden">
+            {mode === "write" ? <Editor /> : <Preview />}
+          </main>
         </div>
-      </main>
-    </div>
+      </div>
+    </TooltipProvider>
   );
 }
