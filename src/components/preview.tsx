@@ -1,5 +1,7 @@
 "use client";
 
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { useActiveFile } from "@/lib/store";
 
 export function Preview() {
@@ -18,10 +20,11 @@ export function Preview() {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div
-        className="prose prose-neutral dark:prose-invert max-w-none px-8 py-6 lg:px-16 lg:py-10 font-[var(--font-lora)] text-lg leading-relaxed"
-        dangerouslySetInnerHTML={{ __html: file.content || "" }}
-      />
+      <div className="prose prose-neutral dark:prose-invert max-w-none px-8 py-6 lg:px-16 lg:py-10 font-[var(--font-lora)] text-lg leading-relaxed">
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+          {file.content || ""}
+        </ReactMarkdown>
+      </div>
     </div>
   );
 }

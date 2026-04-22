@@ -6,6 +6,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import Highlight from "@tiptap/extension-highlight";
 import Typography from "@tiptap/extension-typography";
+import { Markdown } from "@tiptap/markdown";
 import { store, useActiveFile } from "@/lib/store";
 import { EditorToolbar } from "@/components/editor-toolbar";
 
@@ -24,6 +25,7 @@ export function Editor() {
       }),
       Highlight,
       Typography,
+      Markdown,
     ],
     editorProps: {
       attributes: {
@@ -33,7 +35,8 @@ export function Editor() {
     immediatelyRender: false,
     onUpdate: ({ editor }) => {
       if (file) {
-        store.updateContent(file.id, editor.getHTML());
+        const md = editor.storage.markdown?.manager?.serialize(editor.getJSON()) ?? "";
+        store.updateContent(file.id, md);
       }
     },
   });
@@ -41,7 +44,9 @@ export function Editor() {
   useEffect(() => {
     if (!editor || !file) return;
     if (prevFileId.current !== file.id) {
-      editor.commands.setContent(file.content || "");
+      editor.commands.setContent(file.content || "", {
+        contentType: "markdown",
+      });
       prevFileId.current = file.id;
     }
   }, [editor, file]);

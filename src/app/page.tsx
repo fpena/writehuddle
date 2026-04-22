@@ -12,6 +12,7 @@ import { useActiveFile, useStore } from "@/lib/store";
 import { FileTree } from "@/components/file-tree";
 import { Editor } from "@/components/editor";
 import { Preview } from "@/components/preview";
+import { CommitDialog } from "@/components/commit-dialog";
 import {
   Tooltip,
   TooltipContent,
@@ -76,7 +77,8 @@ export default function Home() {
             </div>
           )}
 
-          <div className="ml-auto flex items-center gap-1">
+          <div className="ml-auto flex items-center gap-2">
+            <CommitDialog />
             <div className="flex items-center rounded-md border p-0.5">
               <Tooltip>
                 <TooltipTrigger
