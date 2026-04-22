@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   PanelLeftClose,
   PanelLeft,
   Eye,
   Pencil,
+  RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useActiveFile, useStore } from "@/lib/store";
+import { useActiveFile, useStore, type FileNode } from "@/lib/store";
 import { FileTree } from "@/components/file-tree";
 import { Editor } from "@/components/editor";
 import { Preview } from "@/components/preview";
@@ -23,8 +24,30 @@ import {
 export default function Home() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mode, setMode] = useState<"write" | "preview">("write");
+  const [syncing, setSyncing] = useState(false);
   const file = useActiveFile();
-  const { files } = useStore();
+  const { files, replaceFiles } = useStore();
+
+  const syncFromGitHub = useCallback(async () => {
+    setSyncing(true);
+    try {
+      const res = await fetch("/api/git/docs");
+      const data = await res.json();
+      if (res.ok && data.files?.length > 0) {
+        replaceFiles(data.files as FileNode[]);
+      }
+    } catch {
+      // silent fail on sync
+    } finally {
+      setSyncing(false);
+    }
+  }, [replaceFiles]);
+
+  useEffect(() => {
+    if (files.length === 0) {
+      syncFromGitHub();
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const breadcrumb = (() => {
     if (!file) return null;
@@ -78,6 +101,18 @@ export default function Home() {
           )}
 
           <div className="ml-auto flex items-center gap-2">
+            <Tooltip>
+              <TooltipTrigger
+                onClick={syncFromGitHub}
+                disabled={syncing}
+                className="p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+              >
+                <RefreshCw
+                  className={cn("h-4 w-4", syncing && "animate-spin")}
+                />
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Sync from GitHub</TooltipContent>
+            </Tooltip>
             <CommitDialog />
             <div className="flex items-center rounded-md border p-0.5">
               <Tooltip>

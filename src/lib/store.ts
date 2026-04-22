@@ -24,6 +24,7 @@ interface FileState {
   toggleFolder: (id: string) => void;
   moveFile: (fileId: string, targetFolderId: string | null) => void;
   deleteNode: (id: string) => void;
+  replaceFiles: (files: FileNode[]) => void;
 }
 
 export const useStore = create<FileState>()(
@@ -131,6 +132,16 @@ export const useStore = create<FileState>()(
             ? null
             : s.activeFileId,
         }));
+      },
+
+      replaceFiles(files) {
+        set({
+          files,
+          activeFileId: null,
+          expandedFolders: files
+            .filter((f) => f.type === "folder")
+            .map((f) => f.id),
+        });
       },
     }),
     {
